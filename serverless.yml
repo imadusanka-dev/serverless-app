@@ -1,0 +1,102 @@
+service: notes-app-api
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  # apiGateway:
+  #   apiKeys:
+  #     - name: api-key-${self:provider.stage}
+  #       value: super-secret-key-${self:provider.stage} You can use any value here
+  #   usagePlan:
+  #     quota:
+  #       limit: 100
+  #       offset: 0
+  #       period: DAY
+  #     throttle:
+  #       burstLimit: 10
+  #       rateLimit: 100
+  environment:
+    TABLE_NAME: !Ref NotesTable
+
+plugins:
+  - serverless-iam-roles-per-function
+
+functions:
+  createNote:
+    handler: handler.createNote
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - dynamodb:PutItem
+        Resource: !GetAtt NotesTable.Arn
+    events:
+      - http:
+          method: post
+          path: notes
+
+  updateNote:
+    handler: handler.updateNote
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - dynamodb:UpdateItem
+        Resource: !GetAtt NotesTable.Arn
+    events:
+      - http:
+          method: put
+          path: notes/{id}
+
+  getNoteById:
+    handler: handler.getNoteById
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - dynamodb:GetItem
+        Resource: !GetAtt NotesTable.Arn
+    events:
+      - http:
+          method: get
+          path: notes/{id}
+
+  getAllNotes:
+    handler: handler.getAllNotes
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - dynamodb:Scan
+        Resource: !GetAtt NotesTable.Arn
+    events:
+      - http:
+          method: get
+          path: notes
+          # private: true - enable api key
+
+  deleteNote:
+    handler: handler.deleteNote
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - dynamodb:DeleteItem
+        Resource: !GetAtt NotesTable.Arn
+    events:
+      - http:
+          method: delete
+          path: notes/{id}
+
+resources:
+  Resources:
+    NotesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        TableName: notes
+        KeySchema:
+          - AttributeName: noteId
+            KeyType: HASH
+        AttributeDefinitions:
+          - AttributeName: noteId
+            AttributeType: S
