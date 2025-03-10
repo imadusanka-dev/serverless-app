@@ -8,7 +8,6 @@ phases:
     commands:
       - echo Installing Serverless Framework
       - npm install -g serverless@3
-      - cd ../../
       - echo Installing npm packages
       - npm install
   build:
