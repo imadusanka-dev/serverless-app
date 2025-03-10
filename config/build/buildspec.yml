@@ -1,0 +1,25 @@
+version: 0.2
+
+phases:
+  install:
+    on-failure: ABORT
+    runtime-versions:
+      nodejs: 20.x
+    commands:
+      - echo Installing Serverless Framework
+      - npm install -g serverless@3
+      - cd ../../
+      - echo Installing npm packages
+      - npm install
+  build:
+    on-failure: ABORT
+    commands:
+      - echo Packaging Serverless application
+      - serverless package --package my-artifact --stage dev
+artifacts:
+  files:
+    - my-artifact/*
+  name: MyProjectArtifacts
+cache:
+  paths:
+    - node_modules/**/*
